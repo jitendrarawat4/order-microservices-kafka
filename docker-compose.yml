@@ -39,6 +39,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    restart: always
+    ports:
+      - "9411:9411"
 
   order-execution-service:
     image: order-execution-service:latest
@@ -47,6 +53,7 @@ services:
     depends_on:
       - kafka
       - postgres
+      - zipkin
     ports:
       - "8086:8086"
     environment:
@@ -64,6 +71,7 @@ services:
     depends_on:
       - kafka
       - postgres
+      - zipkin
     ports:
       - "8085:8085"
     environment:
