@@ -1,5 +1,6 @@
 package com.cbre.order.execution.service.kafka;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -20,25 +21,25 @@ public class OrderConsumer {
 	@Autowired
 	private OrderExecutionService orderExecutionService;
 
-	@KafkaListener(topics = "order-topic", groupId = "order-execution-group", containerFactory = "kafkaListenerContainerFactory")
-	public void consumeOrder(String orderDetails) {
-		log.info("Consuming order: " + orderDetails);
+	@KafkaListener(topics = "order-topic", groupId = "order-execution-group")
+	public void consumeOrder(ConsumerRecord<String, String> record) {
+		String orderDetails = record.value();
+		log.info("Consuming order: {}", orderDetails);
 
 		Long orderId = extractOrderIdFromMessage(orderDetails);
 		Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
 
-		if (order.getStatus() == Order.OrderStatus.PENDING) {
-			order.setStatus(Order.OrderStatus.PROCESSING);
-			
-			log.info("Processing Order ID: " + order.getId());
-			orderRepository.save(order);
-			
-			orderExecutionService.processOrderSequentially(order);
-		}
+		
+			if (order.getStatus() == Order.OrderStatus.PENDING) {
+				order.setStatus(Order.OrderStatus.PROCESSING);
+				log.info("Processing Order ID: {}", order.getId());
+				orderRepository.save(order);
+				orderExecutionService.processOrderSequentially(order);
+			}
+		
 	}
 
 	private Long extractOrderIdFromMessage(String orderDetails) {
-
 		return Long.parseLong(orderDetails.split(":")[1].split(",")[0].trim());
 	}
 }

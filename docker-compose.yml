@@ -39,22 +39,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  cbre-order-service:
-    image: order-creation-service:latest
-    container_name: order-creation-service
-    restart: always
-    depends_on:
-      - kafka
-      - postgres
-    ports:
-      - "8085:8085"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cbreOrders
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 123456789
-      KAFKA_BROKER: kafka:9092
 
-  cbre-order-execution-service:
+  order-execution-service:
     image: order-execution-service:latest
     container_name: order-execution-service
     restart: always
@@ -68,6 +54,25 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: 123456789
       KAFKA_BROKER: kafka:9092
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+
+  order-creation-service:
+    image: order-creation-service:latest
+    container_name: order-creation-service
+    restart: always
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cbreOrders
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456789
+      KAFKA_BROKER: kafka:9092
+      MANAGEMENT_TRACING_SAMPLING_PROBABILITY: 1.0
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
 
 volumes:
   postgres_data:
